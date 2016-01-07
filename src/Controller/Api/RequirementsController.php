@@ -7,8 +7,9 @@
  */
 
 namespace App\Controller\Api;
+
 use App\Controller\Api\AppController;
-use Cake\Network\Http\Client;
+use App\BusinessLogic\RequirementManager;
 
 class RequirementsController extends AppController
 {
@@ -61,24 +62,73 @@ class RequirementsController extends AppController
      */
     public function edit($id)
     {
+        $this->response->type('json');
         $data = $this->request->input('json_decode');
-        if (isset($data->status) && isset($data->user_code) &&
-            (strtolower($data->status)=='approved' ||
-                (strtolower($data->status)=='rejected' && isset($data->reject_reason)
-                                                       && !empty(trim($data->reject_reason))))) {
-            $isRejected = strtolower($data->status)=='rejected';
-            $queryParams = ['cod_u'=>$data->user_code, 'opt'=>($isRejected?'no':'si'), 'id'=>$id, 'rq'=>'M-001'];
-            if($isRejected)
-                $queryParams['moti'] = $data->reject_reason;
-            $http = new Client();
-            // Simple get with querystring
-            $response = $http->get('http://192.168.30.57/mesaayuda/rq_autorizSup_u.php', $queryParams);
-            $this->response->body($response->body());
-            return $this->response;
-        }
-        else {
-            $this->response->statusCode(400);
-            return $this->response;
-        }
+        if (!$this->validParameters($data))
+            return $this->invalidParametersResponse();
+
+        $requirement = RequirementManager::getRequirement($id);
+        if ($requirement != null)
+            return $this->alreadyProcessedRequirement($requirement->status);
+
+        $isRejection = strtolower($data->status) == 'rejected';
+        $response = RequirementManager::processRequirementAprroval($id, $data, $isRejection);
+        if ($response->statusCode() != 200)
+            return $this->unprocessableRequirement($response->statusCode());
+
+        $requirement = RequirementManager::saveRequirement($id, ($isRejection ? 0 : 1));
+        $this->response->body(json_encode($requirement));
+        return $this->response;
+    }
+
+    /**
+     * Verifica que los parametros sean adecuados
+     * @param $data
+     * @return bool
+     */
+    private function validParameters($data)
+    {
+        return isset($data->status) && isset($data->user_code) &&
+        (strtolower($data->status) == 'approved' ||
+            (strtolower($data->status) == 'rejected' && isset($data->reject_reason)
+                && !empty(trim($data->reject_reason))));
+    }
+
+    /**
+     * Crea response de parámetros invalidos
+     * @return \Cake\Network\Response|null
+     */
+    public function invalidParametersResponse()
+    {
+        $this->response->statusCode(400);
+        return $this->response;
+    }
+
+    /**
+     * Verifica si ya se proceso un requerimiento
+     * @param $status
+     * @return \Cake\Network\Response|null
+     */
+    public function alreadyProcessedRequirement($status)
+    {
+        $this->response->statusCode(409);
+        $errorMessage = 'El requerimiento ya fue ' . ($status == 1 ? 'aprobado' : 'rechazado') .
+            ', no puede realizar ninguna otra acción';
+        $this->response->body(json_encode((object)['error' => $errorMessage]));
+        return $this->response;
+    }
+
+    /**
+     * Crea response de que no se pudo completar la
+     * solicitud al servidor de mesa de ayuda
+     * @param Integer $statusCode
+     * @return \Cake\Network\Response|null
+     */
+    public function unprocessableRequirement($statusCode)
+    {
+        $this->response->statusCode($statusCode);
+        $this->response->body(json_encode((object)['error' => "El servidor de Mesa de Ayuda no pudo procesar
+                    correctamente su solicitud. Intentelo de nuevo mas tarde."]));
+        return $this->response;
     }
 }

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourceManagerImpl" format="xml" hash="2451026425">
+    <data-source source="LOCAL" name="helpdesk" uuid="6c7bc828-a067-4bc9-ad7f-9336b5c88284">
+      <driver-ref>sqlite.xerial</driver-ref>
+      <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
+      <jdbc-url>jdbc:sqlite:C:\wamp\www\helpdesk\db\helpdesk</jdbc-url>
+      <libraries />
+    </data-source>
+  </component>
+</project>
+
