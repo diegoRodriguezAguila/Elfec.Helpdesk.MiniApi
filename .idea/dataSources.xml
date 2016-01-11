@@ -5,8 +5,6 @@
       <driver-ref>sqlite.xerial</driver-ref>
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
       <jdbc-url>jdbc:sqlite:C:\wamp\www\helpdesk\db\helpdesk</jdbc-url>
-      <libraries />
     </data-source>
   </component>
 </project>
-

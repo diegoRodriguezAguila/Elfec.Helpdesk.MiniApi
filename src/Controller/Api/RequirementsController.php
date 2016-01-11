@@ -71,15 +71,17 @@ class RequirementsController extends AppController
         if ($requirement != null)
             return $this->alreadyProcessedRequirement($requirement->status);
 
-        $isRejection = strtolower($data->status) == 'rejected';
-        $response = RequirementManager::processRequirementAprroval($id, $data, $isRejection);
+        $isRejection = $this->isRejection($data->status);
+        $response = RequirementManager::processRequirementApproval($id, $data, $isRejection);
         if ($response->statusCode() != 200)
             return $this->unprocessableRequirement($response->statusCode());
 
         $requirement = RequirementManager::saveRequirement($id, ($isRejection ? 0 : 1));
-        $this->response->body(json_encode($requirement));
+        $this->response->body(json_encode($requirement->jsonSerialize()));
         return $this->response;
     }
+
+    //region Private Methods
 
     /**
      * Verifica que los parametros sean adecuados
@@ -98,7 +100,7 @@ class RequirementsController extends AppController
      * Crea response de parámetros invalidos
      * @return \Cake\Network\Response|null
      */
-    public function invalidParametersResponse()
+    private function invalidParametersResponse()
     {
         $this->response->statusCode(400);
         return $this->response;
@@ -109,7 +111,7 @@ class RequirementsController extends AppController
      * @param $status
      * @return \Cake\Network\Response|null
      */
-    public function alreadyProcessedRequirement($status)
+    private function alreadyProcessedRequirement($status)
     {
         $this->response->statusCode(409);
         $errorMessage = 'El requerimiento ya fue ' . ($status == 1 ? 'aprobado' : 'rechazado') .
@@ -124,11 +126,23 @@ class RequirementsController extends AppController
      * @param Integer $statusCode
      * @return \Cake\Network\Response|null
      */
-    public function unprocessableRequirement($statusCode)
+    private function unprocessableRequirement($statusCode)
     {
         $this->response->statusCode($statusCode);
         $this->response->body(json_encode((object)['error' => "El servidor de Mesa de Ayuda no pudo procesar
                     correctamente su solicitud. Intentelo de nuevo mas tarde."]));
         return $this->response;
     }
+
+    /**
+     * Es solicitud de rechazo de requerimiento
+     * @param $status
+     * @return bool
+     */
+    private function isRejection($status)
+    {
+        return strtolower($status) == 'rejected';
+    }
+
+    //endregion
 }

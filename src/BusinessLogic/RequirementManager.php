@@ -11,15 +11,18 @@ namespace App\BusinessLogic;
 
 use Cake\ORM\TableRegistry;
 use Cake\Network\Http\Client;
+use App\Model\Entity\Requirement;
 
-class RequirementManager {
+class RequirementManager
+{
 
     /**
      * Gets a requirement
      * @param $code
      * @return mixed
      */
-    public static function getRequirement($code){
+    public static function getRequirement($code)
+    {
         return TableRegistry::get('Requirements')->find()->where(['code' => $code])->first();
     }
 
@@ -27,11 +30,13 @@ class RequirementManager {
      * Creates and saves a requirement
      * @param $code
      * @param $status
-     * @return \Cake\Datasource\EntityInterface|\Cake\ORM\Entity
+     * @return Requirement
      */
-    public static function saveRequirement($code, $status) {
+    public static function saveRequirement($code, $status)
+    {
         $requirements = TableRegistry::get('Requirements');
-        $requirement = $requirements->newEntity(['code'=>$code, 'status'=>$status]);
+        $requirements->addBehavior('Timestamp');
+        $requirement = new Requirement(['code' => $code, 'status' => $status]);
         $requirements->save($requirement);
         return $requirement;
     }
@@ -42,13 +47,13 @@ class RequirementManager {
      * @param $isRejection
      * @return \Cake\Network\Http\Response
      */
-    public static function processRequirementAprroval($id, $data, $isRejection)
+    public static function processRequirementApproval($id, $data, $isRejection)
     {
         $queryParams = ['cod_u' => $data->user_code, 'opt' => ($isRejection ? 'no' : 'si'), 'id' => $id, 'rq' => 'M-001'];
         if ($isRejection)
             $queryParams['moti'] = $data->reject_reason;
         $http = new Client();
-        // Simple get with querystring
+        // Simple get with query string
         $response = $http->get('http://192.168.30.57/mesaayuda/rq_autorizSup_u.php', $queryParams);
         return $response;
     }
