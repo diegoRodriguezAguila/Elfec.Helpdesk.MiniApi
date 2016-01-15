@@ -103,6 +103,8 @@ class RequirementsController extends AppController
     private function invalidParametersResponse()
     {
         $this->response->statusCode(400);
+        $this->response->body(json_encode((object)['message' =>
+            'Parametros inválidos para solicitud actual', 'code' => 400]));
         return $this->response;
     }
 
@@ -116,7 +118,7 @@ class RequirementsController extends AppController
         $this->response->statusCode(409);
         $errorMessage = 'El requerimiento ya fue ' . ($status == 1 ? 'aprobado' : 'rechazado') .
             ', no puede realizar ninguna otra acción';
-        $this->response->body(json_encode((object)['error' => $errorMessage]));
+        $this->response->body(json_encode((object)['message' => $errorMessage, 'code' => 409]));
         return $this->response;
     }
 
@@ -129,8 +131,8 @@ class RequirementsController extends AppController
     private function unprocessableRequirement($statusCode)
     {
         $this->response->statusCode($statusCode);
-        $this->response->body(json_encode((object)['error' => "El servidor de Mesa de Ayuda no pudo procesar
-                    correctamente su solicitud. Intentelo de nuevo mas tarde."]));
+        $this->response->body(json_encode((object)['message' => "El servidor de Mesa de Ayuda no pudo procesar
+                    correctamente su solicitud. Intentelo de nuevo mas tarde.", 'code' =>$statusCode]));
         return $this->response;
     }
 

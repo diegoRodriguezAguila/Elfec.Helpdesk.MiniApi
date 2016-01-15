@@ -49,12 +49,13 @@ class RequirementManager
      */
     public static function processRequirementApproval($id, $data, $isRejection)
     {
-        $queryParams = ['cod_u' => $data->user_code, 'opt' => ($isRejection ? 'no' : 'si'), 'id' => $id, 'rq' => 'M-001'];
+        $queryParams = ['cod_u' => $data->user_code, 'cod_sol'=>$data->request_user,
+            'opt' => ($isRejection ? 'no' : 'si'), 'id' => $id];
         if ($isRejection)
             $queryParams['moti'] = $data->reject_reason;
         $http = new Client();
         // Simple get with query string
-        $response = $http->get('http://192.168.30.57/mesaayuda/rq_autorizSup_u.php', $queryParams);
+        $response = $http->get('http://192.168.30.57/mesaayuda/rq_autorizGte_u.php', $queryParams);
         return $response;
     }
 } 
