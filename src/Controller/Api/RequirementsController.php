@@ -73,7 +73,7 @@ class RequirementsController extends AppController
 
         $isRejection = $this->isRejection($data->status);
         $response = RequirementManager::processRequirementApproval($id, $data, $isRejection);
-        if ($response->statusCode() != 200)
+        if ($this->responseHasError($response))
             return $this->unprocessableRequirement($response->statusCode());
 
         $requirement = RequirementManager::saveRequirement($id, ($isRejection ? 0 : 1));
@@ -130,9 +130,12 @@ class RequirementsController extends AppController
      */
     private function unprocessableRequirement($statusCode)
     {
+        //Code is not error, but it has error message
+        if($statusCode==200)
+            $statusCode = 400;
         $this->response->statusCode($statusCode);
-        $this->response->body(json_encode((object)['message' => "El servidor de Mesa de Ayuda no pudo procesar
-                    correctamente su solicitud. Intentelo de nuevo mas tarde.", 'code' =>$statusCode]));
+        $this->response->body(json_encode((object)['message' => "El servidor de Mesa de Ayuda no pudo procesar "
+        ."correctamente su solicitud. Intentelo de nuevo mas tarde.", 'code' =>$statusCode]));
         return $this->response;
     }
 
@@ -144,6 +147,17 @@ class RequirementsController extends AppController
     private function isRejection($status)
     {
         return strtolower($status) == 'rejected';
+    }
+
+    /**
+     * Verifica si la respuesta del servidor tenía errores
+     * @param \Cake\Network\Http\Response $response
+     * @return bool
+     */
+    public function responseHasError($response)
+    {
+        return $response->statusCode() != 200 ||
+               $response->body()==null || strpos(strtolower($response->body()),'error') !== false ;
     }
 
     //endregion
