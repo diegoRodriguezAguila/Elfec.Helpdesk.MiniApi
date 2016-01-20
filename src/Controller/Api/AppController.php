@@ -28,6 +28,11 @@ class AppController extends Controller
 
         $this->loadComponent('RequestHandler');
         $this->loadComponent('Flash');
+        $this->loadComponent('Auth', ['authenticate' => ['App/Security.HelpdeskToken'=>['headerDeviceId'=>'X-Api-DeviceId',
+            'headerToken'=>'X-Api-Token']],
+            'checkAuthIn' => 'Controller.initialize',
+            'loginAction' => false,
+            'unauthorizedRedirect' => false]);
     }
 
     /**
